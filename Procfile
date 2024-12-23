@@ -1,1 +1,1 @@
-web: pnpm install --no-frozen-lockfile && pnpm build && pnpm run start --character "../characters/frey.character.json"
+worker: pnpm install --no-frozen-lockfile && pnpm build && pnpm run start --character "../characters/frey.character.json"
