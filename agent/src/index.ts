@@ -7,6 +7,7 @@ import { LensAgentClient } from "@ai16z/client-lens";
 import { SlackClientInterface } from "@ai16z/client-slack";
 import { TelegramClientInterface } from "@ai16z/client-telegram";
 import { TwitterClientInterface } from "@ai16z/client-twitter";
+import { FrenFiClientInterface } from "@chasebrownn/client-frenfi/src/index.ts";
 import {
     AgentRuntime,
     CacheManager,
@@ -371,6 +372,17 @@ export async function initializeClients(
             (twitterClient as any).enableSearch = !isFalsish(
                 getSecret(character, "TWITTER_SEARCH_ENABLE")
             );
+        }
+    }
+
+    if (clientTypes.includes(Clients.FRENFI)) {
+        const frenfiClient = await FrenFiClientInterface.start(runtime);
+
+        if (frenfiClient) {
+            clients.frenfi = frenfiClient;
+            // (frenfiClient as any).enableSearch = !isFalsish(
+            //     getSecret(character, "TWITTER_SEARCH_ENABLE")
+            // );
         }
     }
 
