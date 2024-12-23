@@ -21,7 +21,6 @@
         "test": "bash ./scripts/test.sh",
         "smokeTests": "bash ./scripts/smokeTests.sh",
         "integrationTests": "bash ./scripts/integrationTests.sh",
-        "heroku-prebuild": "npm install -g pnpm",
         "heroku-cleanup": "pnpm install --no-frozen-lockfile"
     },
     "devDependencies": {
