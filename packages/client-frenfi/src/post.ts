@@ -5,7 +5,6 @@ import {
     ModelClass,
     stringToUuid,
     parseBooleanFromText,
-    imageProvider,
 } from "@ai16z/eliza";
 import { elizaLogger, getEmbeddingZeroVector } from "@ai16z/eliza";
 import { ClientBase } from "./base";
@@ -125,12 +124,6 @@ export class IPFSPostClient {
             if (!cleanedContent) {
                 elizaLogger.error('Failed to extract valid content from response');
                 return;
-            } else {
-                const imagePrompt = `Create an artistic visualization of: ${cleanedContent}`;
-                const imageResponse = await this.runtime.imageProvider.generateImage({
-                    prompt: imagePrompt,
-                    size: "1024x1024"
-                });
             }
 
             // Upload to IPFS
