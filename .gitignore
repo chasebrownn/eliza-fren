@@ -16,6 +16,7 @@ dist/
 models/*.gguf
 
 cookies.json
+out.md
 
 db.sqlite
 searches/
