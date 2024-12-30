@@ -1,16 +1,153 @@
 # Table of Contents
+- packages/client-frenfi/.npmignore
+- packages/client-frenfi/package.json
+- packages/client-frenfi/tsup.config.ts
+- packages/client-frenfi/tsconfig.json
+- packages/client-frenfi/eslint.config.mjs
 - packages/client-frenfi/src/base.ts
 - packages/client-frenfi/src/environment.ts
 - packages/client-frenfi/src/index.ts
 - packages/client-frenfi/src/post.ts
 
+## File: packages/client-frenfi/.npmignore
+
+- Extension:
+- Language: unknown
+- Size: 52 bytes
+- Created: 2024-12-19 13:25:03
+- Modified: 2024-12-19 13:25:03
+
+### Code
+
+```unknown
+*
+
+!dist/**
+!package.json
+!readme.md
+!tsup.config.ts
+```
+
+## File: packages/client-frenfi/package.json
+
+- Extension: .json
+- Language: json
+- Size: 487 bytes
+- Created: 2024-12-21 11:36:04
+- Modified: 2024-12-21 11:36:04
+
+### Code
+
+```json
+{
+  "name": "@chasebrownn/client-frenfi",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "@ai16z/eliza": "workspace:*",
+    "axios": "^1.6.2",
+    "ethers": "^6.9.0",
+    "zod": "3.22.4"
+  },
+  "devDependencies": {
+    "tsup": "8.0.2",
+    "typescript": "^5.3.3"
+  },
+  "scripts": {
+    "build": "tsup --format esm --dts",
+    "dev": "tsup --format esm --dts --watch",
+    "lint": "eslint --fix --cache ."
+  }
+}
+```
+
+## File: packages/client-frenfi/tsup.config.ts
+
+- Extension: .ts
+- Language: typescript
+- Size: 674 bytes
+- Created: 2024-12-19 13:48:40
+- Modified: 2024-12-19 13:48:40
+
+### Code
+
+```typescript
+import { defineConfig } from "tsup";
+
+export default defineConfig({
+    entry: ["src/index.ts"],
+    outDir: "dist",
+    sourcemap: true,
+    clean: true,
+    format: ["esm"], // Ensure you're targeting CommonJS
+    external: [
+        "dotenv", // Externalize dotenv to prevent bundling
+        "fs", // Externalize fs to use Node.js built-in module
+        "path", // Externalize other built-ins if necessary
+        "@reflink/reflink",
+        "@node-llama-cpp",
+        "https",
+        "http",
+        "agentkeepalive",
+        "ipfs-http-client",
+        "ethers",
+        "zod",
+        "@ai16z/eliza",
+        // Add other modules you want to externalize
+    ],
+});
+
+```
+
+## File: packages/client-frenfi/tsconfig.json
+
+- Extension: .json
+- Language: json
+- Size: 171 bytes
+- Created: 2024-12-19 13:25:03
+- Modified: 2024-12-19 13:25:03
+
+### Code
+
+```json
+{
+    "extends": "../core/tsconfig.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": "src"
+    },
+    "include": [
+        "src/**/*.ts"
+    ]
+}
+```
+
+## File: packages/client-frenfi/eslint.config.mjs
+
+- Extension: .mjs
+- Language: unknown
+- Size: 99 bytes
+- Created: 2024-12-19 13:25:03
+- Modified: 2024-12-19 13:25:03
+
+### Code
+
+```unknown
+import eslintGlobalConfig from "../../eslint.config.mjs";
+
+export default [...eslintGlobalConfig];
+
+```
+
 ## File: packages/client-frenfi/src/base.ts
 
 - Extension: .ts
 - Language: typescript
-- Size: 4567 bytes
-- Created: 2024-12-21 11:52:01
-- Modified: 2024-12-21 11:52:01
+- Size: 4569 bytes
+- Created: 2024-12-21 12:11:41
+- Modified: 2024-12-21 12:11:41
 
 ### Code
 
@@ -120,7 +257,7 @@ export class ClientBase extends EventEmitter {
             throw error;
         }
     }
-
+ß
     async postToChain(tokenUri: string): Promise<string> {
         // Get creator address and await it
         const creator = await this.wallet.getAddress();
@@ -244,9 +381,9 @@ export default FrenFiClientInterface;
 
 - Extension: .ts
 - Language: typescript
-- Size: 6449 bytes
-- Created: 2024-12-21 11:50:09
-- Modified: 2024-12-21 11:50:09
+- Size: 6472 bytes
+- Created: 2024-12-30 10:54:11
+- Modified: 2024-12-30 10:54:11
 
 ### Code
 
@@ -259,7 +396,7 @@ import {
     stringToUuid,
     parseBooleanFromText,
 } from "@ai16z/eliza";
-import { elizaLogger } from "@ai16z/eliza";
+import { elizaLogger, getEmbeddingZeroVector } from "@ai16z/eliza";
 import { ClientBase } from "./base";
 
 const ipfsPostTemplate = `
@@ -292,7 +429,7 @@ export class IPFSPostClient {
         this.runtime = runtime;
     }
 
-    async start(postImmediately: boolean = false) {
+    async start(postImmediately: boolean = true) {
         await this.client.init();
 
         const generateNewPostLoop = async () => {
