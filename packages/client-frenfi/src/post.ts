@@ -143,16 +143,16 @@ export class IPFSPostClient {
                 },
                 {}
             );
-            const imageResult = await this.runtime.imageService.generateImage({
-                prompt: cleanedContent,
-                width: 578,
-                height: 300
-            });
+            // const imageResult = await this.runtime.imageService.generateImage({
+            //     prompt: cleanedContent,
+            //     width: 578,
+            //     height: 300
+            // });
 
             // Convert the image to a File object
-            const response = await fetch(imageResult.url);
-            const imageBlob = await response.blob();
-            const imageFile = new File([imageBlob], `post-image-${Date.now()}.png`, { type: 'image/png' });
+            //const response = await fetch(imageResult.url);
+            //const imageBlob = await response.blob();
+            //const imageFile = new File([imageBlob], `post-image-${Date.now()}.png`, { type: 'image/png' });
 
             // Create File object from content
             const blob = new Blob([cleanedContent], { type: 'text/plain' });
@@ -160,7 +160,7 @@ export class IPFSPostClient {
 
             // Post using SDK
             await this.client.sdk.createPost(
-                imageFile,
+                null,
                 `${this.runtime.character.name}'s Post`, // name
                 "POST",                                  // symbol
                 cleanedContent                          // description
@@ -170,7 +170,7 @@ export class IPFSPostClient {
             await this.runtime.cacheManager.set("ipfs/lastPost", {
                 timestamp: Date.now(),
                 content: cleanedContent,
-                imageUrl: imageResult.url
+                //imageUrl: imageResult.url
             });
 
             // Create memory of the post
@@ -183,7 +183,7 @@ export class IPFSPostClient {
                     source: "ipfs",
                     attachments: [{
                         type: "image",
-                        url: imageResult.url
+                        //url: imageResult.url
                     }]
                 },
                 roomId,

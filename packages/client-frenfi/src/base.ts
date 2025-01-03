@@ -7,42 +7,75 @@ import {
 import axios from 'axios';
 import { FrenFiSDK } from "motokultivator";
 import { ethers } from 'ethers';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Get the equivalent of __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+/**
+     * @notice Checks if a given address is a token created by the factory.
+     * @dev Verifies if the specified address is part of the tokens managed by the factory.
+     * @param token The address of the token to check.
+     * @return True if the address is a token created by the factory, false otherwise.
+     */
+// function isToken(address token) external view returns (bool) {
+//     FrenFiFactoryStorage storage $ = _getFrenFiFactoryStorage();
+//     return $.tokens.contains(token);
+// }
+
+const FRENFI_FACTORY_ABI = [
+    "function isToken(address token) view returns (bool)"
+];
 
 export class ClientBase extends EventEmitter {
     runtime: IAgentRuntime;
     provider: ethers.JsonRpcProvider;
     signer: ethers.Signer;
     sdk: FrenFiSDK;
+    frenfifactory: ethers.Contract;
 
     constructor(runtime: IAgentRuntime) {
         super();
         this.runtime = runtime;
         this.provider = new ethers.JsonRpcProvider(runtime.getSetting("UNREAL_RPC_URL"));
         this.signer = new ethers.Wallet(runtime.getSetting("PRIVATE_KEY"), this.provider);
+
+        this.frenfifactory = new ethers.Contract(
+            runtime.getSetting("UNREAL_FRENFI_FACTORY"),
+            FRENFI_FACTORY_ABI,
+            this.signer
+        );
     }
 
     async init() {
         try {
             await this.provider.getNetwork();
-            // Initialize SDK properly - store the returned instance
-            const sdk = new FrenFiSDK();
-            // create() returns a new instance, so we need to store that one
-            this.sdk = await sdk.create('dev', this.signer);
+            this.sdk = await FrenFiSDK.create('dev', this.signer);
             elizaLogger.log("Frenfi SDK initialized");
 
-            // Explicitly try to get JWT token (for debug - delete later) TODO
-            try {
-                const address = await this.signer.getAddress();
-                elizaLogger.log(`Getting signature for address: ${address}`);
-                const response = await this.sdk.fetchToSign(address, true); // true for dev environment
-                elizaLogger.log(`Signing message...`);
-                const signature = await this.signer.signMessage(response.data.message);
-                elizaLogger.log(`Logging in with signature...`);
-                const loginResponse = await this.sdk.login(address, signature, true);
-                elizaLogger.log(`SDK fully initialized with JWT token`);
-            } catch (authError) {
-                elizaLogger.error(`Authentication error:`, authError);
-                throw new Error(`Failed to authenticate with FrenFi: ${authError.message}`);
+            const isToken = await this.frenfifactory.isToken(this.signer);
+            if (!isToken) {
+                elizaLogger.log("Generating creator token...");
+                const name = "Frey";
+                const symbol = "Frey";
+                const description="Frey is a nordic goddess reincarnated as a sentient AI. She is here to bring life to a new generation of powerful agents.";
+
+                // Read the file
+                const filePath = path.resolve(__dirname, '../images/frey.jpeg');
+                const buffer = fs.readFileSync(filePath);
+
+                // Convert to File object
+                const file = new File(
+                    [buffer],
+                    'frey.jpeg',
+                    { type: 'image/jpeg' }
+                );
+
+                await this.sdk.createCreatorToken(file, name, symbol, description);
+                elizaLogger.log("Creator token generated"); // TODO: Return?
             }
 
         } catch (error) {

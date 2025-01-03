@@ -594,8 +594,8 @@ importers:
         specifier: ^6.9.0
         version: 6.13.4(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       motokultivator:
-        specifier: ^0.0.3
-        version: 0.0.3(@swc/core@1.10.1(@swc/helpers@0.5.15))(@types/node@22.10.2)(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+        specifier: ^0.0.17
+        version: 0.0.17(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       zod:
         specifier: 3.22.4
         version: 3.22.4
@@ -14199,8 +14199,8 @@ packages:
   motion@10.16.2:
     resolution: {integrity: sha512-p+PurYqfUdcJZvtnmAqu5fJgV2kR0uLFQuBKtLeFVTrYEVllI99tiOTSefVNYuip9ELTEkepIIDftNdze76NAQ==}
 
-  motokultivator@0.0.3:
-    resolution: {integrity: sha512-m4ymD8NgoXij8sLqm8NivexwKofNuZzOF7LWj8Pn/I/OZqNBWUOIqFboUr3bObP9eo8kaE+jB56B0m4N9tBfIA==}
+  motokultivator@0.0.17:
+    resolution: {integrity: sha512-BGnMokZk97QNaE3UILR95RYGp8MvwykXqJaq22RcKaDKY2AbK/8qd59Axip9PyM1yqqgnVMvuNAby/gceit5IQ==}
 
   mri@1.2.0:
     resolution: {integrity: sha512-tzzskb3bG8LvYGFF/mDTpq3jpI6Q9wc3LEmBaghu+DdCssd1FakN7Bc0hVNmEyGq1bq3RgfkCb3cmQLpNPOroA==}
@@ -37014,19 +37014,15 @@ snapshots:
       '@motionone/utils': 10.18.0
       '@motionone/vue': 10.16.4
 
-  motokultivator@0.0.3(@swc/core@1.10.1(@swc/helpers@0.5.15))(@types/node@22.10.2)(bufferutil@4.0.8)(utf-8-validate@5.0.10):
+  motokultivator@0.0.17(bufferutil@4.0.8)(utf-8-validate@5.0.10):
     dependencies:
       axios: 1.7.9(debug@4.4.0)
       dotenv: 16.4.7
       ethers: 6.13.4(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       prettier: 3.4.2
       prettier-plugin-solidity: 1.4.1(prettier@3.4.2)
-      ts-node: 10.9.2(@swc/core@1.10.1(@swc/helpers@0.5.15))(@types/node@22.10.2)(typescript@5.6.3)
       typescript: 5.6.3
     transitivePeerDependencies:
-      - '@swc/core'
-      - '@swc/wasm'
-      - '@types/node'
       - bufferutil
       - debug
       - utf-8-validate
