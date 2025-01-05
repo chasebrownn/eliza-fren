@@ -15,17 +15,6 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/**
-     * @notice Checks if a given address is a token created by the factory.
-     * @dev Verifies if the specified address is part of the tokens managed by the factory.
-     * @param token The address of the token to check.
-     * @return True if the address is a token created by the factory, false otherwise.
-     */
-// function isToken(address token) external view returns (bool) {
-//     FrenFiFactoryStorage storage $ = _getFrenFiFactoryStorage();
-//     return $.tokens.contains(token);
-// }
-
 const FRENFI_FACTORY_ABI = [
     "function isToken(address token) view returns (bool)"
 ];

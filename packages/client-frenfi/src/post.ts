@@ -100,6 +100,8 @@ export class IPFSPostClient {
                 template: ipfsPostTemplate,
             });
 
+            elizaLogger.log(context);
+
             const newPostContent = await generateText({
                 runtime: this.runtime,
                 context,

@@ -594,8 +594,8 @@ importers:
         specifier: ^6.9.0
         version: 6.13.4(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       motokultivator:
-        specifier: ^0.0.17
-        version: 0.0.17(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+        specifier: ^0.0.23
+        version: 0.0.23(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       zod:
         specifier: 3.22.4
         version: 3.22.4
@@ -14199,8 +14199,8 @@ packages:
   motion@10.16.2:
     resolution: {integrity: sha512-p+PurYqfUdcJZvtnmAqu5fJgV2kR0uLFQuBKtLeFVTrYEVllI99tiOTSefVNYuip9ELTEkepIIDftNdze76NAQ==}
 
-  motokultivator@0.0.17:
-    resolution: {integrity: sha512-BGnMokZk97QNaE3UILR95RYGp8MvwykXqJaq22RcKaDKY2AbK/8qd59Axip9PyM1yqqgnVMvuNAby/gceit5IQ==}
+  motokultivator@0.0.23:
+    resolution: {integrity: sha512-RWhTqut3syglWiOLRyPl7TKqPP1ar6xzEZFc5verVG2XIy2KY9AYHQI426l1ONYYTcqZrCE+H1t/4VbaImW6bA==}
 
   mri@1.2.0:
     resolution: {integrity: sha512-tzzskb3bG8LvYGFF/mDTpq3jpI6Q9wc3LEmBaghu+DdCssd1FakN7Bc0hVNmEyGq1bq3RgfkCb3cmQLpNPOroA==}
@@ -37014,7 +37014,7 @@ snapshots:
       '@motionone/utils': 10.18.0
       '@motionone/vue': 10.16.4
 
-  motokultivator@0.0.17(bufferutil@4.0.8)(utf-8-validate@5.0.10):
+  motokultivator@0.0.23(bufferutil@4.0.8)(utf-8-validate@5.0.10):
     dependencies:
       axios: 1.7.9(debug@4.4.0)
       dotenv: 16.4.7
