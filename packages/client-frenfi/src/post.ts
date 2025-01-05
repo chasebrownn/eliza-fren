@@ -4,9 +4,9 @@ import {
     IAgentRuntime,
     ModelClass,
     stringToUuid,
-    parseBooleanFromText,
+    elizaLogger,
+    getEmbeddingZeroVector
 } from "@ai16z/eliza";
-import { elizaLogger, getEmbeddingZeroVector } from "@ai16z/eliza";
 import { ClientBase } from "./base";
 
 const ipfsPostTemplate = `
@@ -26,13 +26,12 @@ const ipfsPostTemplate = `
 
 # Task: Generate a post in the voice and style and perspective of {{agentName}}.
 Write a 1-3 sentence post that is {{adjective}} about {{topic}} (without mentioning {{topic}} directly), from the perspective of {{agentName}}. Do not add commentary or acknowledge this request, just write the post.
-Your response should not contain any questions. Brief, concise statements only. The total character count MUST be less than 1000. No emojis. Use \\n\\n (double spaces) between statements.`;
+Your response should not contain any questions. Brief, concise statements only. The total character count MUST be less than 1000. No emojis.`;
 
 export class IPFSPostClient {
     client: ClientBase;
     runtime: IAgentRuntime;
     private isProcessing: boolean = false;
-    private lastProcessTime: number = 0;
 
     constructor(client: ClientBase, runtime: IAgentRuntime) {
         this.client = client;
@@ -101,6 +100,8 @@ export class IPFSPostClient {
                 template: ipfsPostTemplate,
             });
 
+            elizaLogger.log(context);
+
             const newPostContent = await generateText({
                 runtime: this.runtime,
                 context,
@@ -126,47 +127,75 @@ export class IPFSPostClient {
                 return;
             }
 
-            // Upload to IPFS
-            const ipfsUrl = await this.client.uploadToPinata({
-                text: cleanedContent,
-                source: "ipfs",
-            });
+            // Generate image based on the content
+            elizaLogger.log("Generating image for content");
+            const imageState = await this.runtime.composeState(
+                {
+                    userId: this.runtime.agentId,
+                    roomId: roomId,
+                    agentId: this.runtime.agentId,
+                    content: {
+                        text: cleanedContent,
+                        action: "GENERATE_IMAGE",
+                        settings: {
+                            width: 578,
+                            height: 300
+                        }
+                    },
+                },
+                {}
+            );
+            // const imageResult = await this.runtime.imageService.generateImage({
+            //     prompt: cleanedContent,
+            //     width: 578,
+            //     height: 300
+            // });
 
-            // Post to blockchain
-            const txHash = await this.client.postToChain(
-                ipfsUrl
+            // Convert the image to a File object
+            //const response = await fetch(imageResult.url);
+            //const imageBlob = await response.blob();
+            //const imageFile = new File([imageBlob], `post-image-${Date.now()}.png`, { type: 'image/png' });
+
+            // Create File object from content
+            const blob = new Blob([cleanedContent], { type: 'text/plain' });
+            const file = new File([blob], `post-${Date.now()}.txt`, { type: 'text/plain' });
+
+            // Post using SDK
+            await this.client.sdk.createPost(
+                null,
+                `${this.runtime.character.name}'s Post`, // name
+                "POST",                                  // symbol
+                cleanedContent                          // description
             );
 
-            // Cache the post
+            // Cache the post timestamp
             await this.runtime.cacheManager.set("ipfs/lastPost", {
                 timestamp: Date.now(),
-                ipfsUrl,
-                txHash,
+                content: cleanedContent,
+                //imageUrl: imageResult.url
             });
 
             // Create memory of the post
             await this.runtime.messageManager.createMemory({
-                id: stringToUuid(txHash),
+                id: stringToUuid(`post-${Date.now()}`),
                 userId: this.runtime.agentId,
                 agentId: this.runtime.agentId,
                 content: {
                     text: cleanedContent,
-                    url: ipfsUrl,
                     source: "ipfs",
-                    metadata: {
-                        txHash,
-                        ipfsUrl,
-                    },
+                    attachments: [{
+                        type: "image",
+                        //url: imageResult.url
+                    }]
                 },
                 roomId,
                 embedding: getEmbeddingZeroVector(),
                 createdAt: Date.now(),
             });
 
-            elizaLogger.log(`Post created - IPFS: ${ipfsUrl}, Transaction: ${txHash}`);
+            elizaLogger.log(`Post created successfully with image`);
 
         } catch (error) {
-            // More detailed error logging
             elizaLogger.error("Error generating new post:");
             if (error instanceof Error) {
                 elizaLogger.error("Message:", error.message);
@@ -174,16 +203,6 @@ export class IPFSPostClient {
             } else {
                 elizaLogger.error("Unknown error type:", error);
             }
-
-            // Log runtime state for debugging
-            elizaLogger.debug("Runtime configuration:", {
-                settings: {
-                    pinataApiKey: !!this.runtime.getSetting("PINATA_API_KEY"),
-                    pinataSecretKey: !!this.runtime.getSetting("PINATA_SECRET_KEY"),
-                    unrealRpcUrl: !!this.runtime.getSetting("UNREAL_RPC_URL"),
-                    unrealContentFactory: this.runtime.getSetting("UNREAL_CONTENT_FACTORY"),
-                }
-            });
         } finally {
             this.isProcessing = false;
         }

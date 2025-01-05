@@ -11,11 +11,11 @@
 
 ## File: packages/client-frenfi/.npmignore
 
-- Extension:
+- Extension: 
 - Language: unknown
 - Size: 52 bytes
-- Created: 2024-12-19 13:25:03
-- Modified: 2024-12-19 13:25:03
+- Created: 2024-12-30 19:04:20
+- Modified: 2024-12-30 19:04:20
 
 ### Code
 
@@ -32,9 +32,9 @@
 
 - Extension: .json
 - Language: json
-- Size: 487 bytes
-- Created: 2024-12-21 11:36:04
-- Modified: 2024-12-21 11:36:04
+- Size: 519 bytes
+- Created: 2024-12-30 19:09:57
+- Modified: 2024-12-30 19:09:57
 
 ### Code
 
@@ -49,6 +49,7 @@
     "@ai16z/eliza": "workspace:*",
     "axios": "^1.6.2",
     "ethers": "^6.9.0",
+    "motokultivator": "^0.0.3",
     "zod": "3.22.4"
   },
   "devDependencies": {
@@ -68,8 +69,8 @@
 - Extension: .ts
 - Language: typescript
 - Size: 674 bytes
-- Created: 2024-12-19 13:48:40
-- Modified: 2024-12-19 13:48:40
+- Created: 2024-12-30 19:04:20
+- Modified: 2024-12-30 19:04:20
 
 ### Code
 
@@ -106,8 +107,8 @@ export default defineConfig({
 - Extension: .json
 - Language: json
 - Size: 171 bytes
-- Created: 2024-12-19 13:25:03
-- Modified: 2024-12-19 13:25:03
+- Created: 2024-12-30 19:04:20
+- Modified: 2024-12-30 19:04:20
 
 ### Code
 
@@ -129,8 +130,8 @@ export default defineConfig({
 - Extension: .mjs
 - Language: unknown
 - Size: 99 bytes
-- Created: 2024-12-19 13:25:03
-- Modified: 2024-12-19 13:25:03
+- Created: 2024-12-30 19:04:20
+- Modified: 2024-12-30 19:04:20
 
 ### Code
 
@@ -146,8 +147,8 @@ export default [...eslintGlobalConfig];
 - Extension: .ts
 - Language: typescript
 - Size: 4569 bytes
-- Created: 2024-12-21 12:11:41
-- Modified: 2024-12-21 12:11:41
+- Created: 2024-12-30 19:04:20
+- Modified: 2024-12-30 19:04:20
 
 ### Code
 
@@ -297,8 +298,8 @@ export class ClientBase extends EventEmitter {
 - Extension: .ts
 - Language: typescript
 - Size: 1457 bytes
-- Created: 2024-12-21 11:36:21
-- Modified: 2024-12-21 11:36:21
+- Created: 2024-12-30 19:04:20
+- Modified: 2024-12-30 19:04:20
 
 ### Code
 
@@ -344,8 +345,8 @@ export async function validateFrenFiConfig(runtime: IAgentRuntime): Promise<Fren
 - Extension: .ts
 - Language: typescript
 - Size: 659 bytes
-- Created: 2024-12-21 11:24:19
-- Modified: 2024-12-21 11:24:19
+- Created: 2024-12-30 19:04:20
+- Modified: 2024-12-30 19:04:20
 
 ### Code
 
@@ -381,9 +382,9 @@ export default FrenFiClientInterface;
 
 - Extension: .ts
 - Language: typescript
-- Size: 6472 bytes
-- Created: 2024-12-30 10:54:11
-- Modified: 2024-12-30 10:54:11
+- Size: 6462 bytes
+- Created: 2024-12-30 19:11:23
+- Modified: 2024-12-30 19:11:23
 
 ### Code
 
@@ -398,6 +399,7 @@ import {
 } from "@ai16z/eliza";
 import { elizaLogger, getEmbeddingZeroVector } from "@ai16z/eliza";
 import { ClientBase } from "./base";
+import { FrenFiSDK } from "motokultivator";
 
 const ipfsPostTemplate = `
 # Areas of Expertise
@@ -488,7 +490,7 @@ export class IPFSPostClient {
 
             const context = composeContext({
                 state,
-                template: this.runtime.character.templates?.ipfsPostTemplate || ipfsPostTemplate,
+                template: ipfsPostTemplate,
             });
 
             const newPostContent = await generateText({
