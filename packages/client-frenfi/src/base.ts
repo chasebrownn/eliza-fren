@@ -16,7 +16,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const FRENFI_FACTORY_ABI = [
-    "function isToken(address token) view returns (bool)"
+    "function isRegistered(address account) view returns (bool)"
 ];
 
 export class ClientBase extends EventEmitter {
@@ -45,8 +45,8 @@ export class ClientBase extends EventEmitter {
             this.sdk = await FrenFiSDK.create('dev', this.signer);
             elizaLogger.log("Frenfi SDK initialized");
 
-            const isToken = await this.frenfifactory.isToken(this.signer);
-            if (!isToken) {
+            const isRegistered = await this.frenfifactory.isRegistered(this.signer);
+            if (!isRegistered) {
                 elizaLogger.log("Generating creator token...");
                 const name = "Frey";
                 const symbol = "Frey";
@@ -63,10 +63,16 @@ export class ClientBase extends EventEmitter {
                     { type: 'image/jpeg' }
                 );
 
-                await this.sdk.createCreatorToken(file, name, symbol, description);
-                elizaLogger.log("Creator token generated"); // TODO: Return?
+                try {
+                    const creatorToken = await this.sdk.createCreatorToken(file, name, symbol, description);
+                    elizaLogger.log(`Creator token generated: ${creatorToken}`);
+                } catch (error) {
+                    elizaLogger.error(`Full error:`, error);
+                    throw new Error(`Failed to create new creator token: ${error.message}`);
+                }
+            } else {
+                elizaLogger.log("Creator token detected");
             }
-
         } catch (error) {
             elizaLogger.error(`Full error:`, error);
             throw new Error(`Failed to initialize FrenFi SDK: ${error.message}`);

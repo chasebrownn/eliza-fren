@@ -14,8 +14,8 @@
 - Extension: 
 - Language: unknown
 - Size: 52 bytes
-- Created: 2024-12-30 19:04:20
-- Modified: 2024-12-30 19:04:20
+- Created: 2024-12-30 18:04:20
+- Modified: 2024-12-30 18:04:20
 
 ### Code
 
@@ -32,9 +32,9 @@
 
 - Extension: .json
 - Language: json
-- Size: 519 bytes
-- Created: 2024-12-30 19:09:57
-- Modified: 2024-12-30 19:09:57
+- Size: 520 bytes
+- Created: 2025-01-05 14:53:33
+- Modified: 2025-01-05 14:53:33
 
 ### Code
 
@@ -49,7 +49,7 @@
     "@ai16z/eliza": "workspace:*",
     "axios": "^1.6.2",
     "ethers": "^6.9.0",
-    "motokultivator": "^0.0.3",
+    "motokultivator": "^0.0.23",
     "zod": "3.22.4"
   },
   "devDependencies": {
@@ -69,8 +69,8 @@
 - Extension: .ts
 - Language: typescript
 - Size: 674 bytes
-- Created: 2024-12-30 19:04:20
-- Modified: 2024-12-30 19:04:20
+- Created: 2024-12-30 18:04:20
+- Modified: 2024-12-30 18:04:20
 
 ### Code
 
@@ -107,8 +107,8 @@ export default defineConfig({
 - Extension: .json
 - Language: json
 - Size: 171 bytes
-- Created: 2024-12-30 19:04:20
-- Modified: 2024-12-30 19:04:20
+- Created: 2024-12-30 18:04:20
+- Modified: 2024-12-30 18:04:20
 
 ### Code
 
@@ -130,8 +130,8 @@ export default defineConfig({
 - Extension: .mjs
 - Language: unknown
 - Size: 99 bytes
-- Created: 2024-12-30 19:04:20
-- Modified: 2024-12-30 19:04:20
+- Created: 2024-12-30 18:04:20
+- Modified: 2024-12-30 18:04:20
 
 ### Code
 
@@ -146,9 +146,9 @@ export default [...eslintGlobalConfig];
 
 - Extension: .ts
 - Language: typescript
-- Size: 4569 bytes
-- Created: 2024-12-30 19:04:20
-- Modified: 2024-12-30 19:04:20
+- Size: 2534 bytes
+- Created: 2025-01-07 11:19:10
+- Modified: 2025-01-07 11:19:10
 
 ### Code
 
@@ -159,135 +159,72 @@ import {
     IAgentRuntime,
     elizaLogger,
 } from "@ai16z/eliza";
-import { ethers } from 'ethers';
 import axios from 'axios';
+import { FrenFiSDK } from "motokultivator";
+import { ethers } from 'ethers';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const CONTENT_FACTORY_ABI = [
-    "function post(address creator, string calldata tokenURI)"
+// Get the equivalent of __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const FRENFI_FACTORY_ABI = [
+    "function isToken(address token) view returns (bool)"
 ];
 
 export class ClientBase extends EventEmitter {
     runtime: IAgentRuntime;
     provider: ethers.JsonRpcProvider;
-    wallet: ethers.Wallet;
-    contract: ethers.Contract;
+    signer: ethers.Signer;
+    sdk: FrenFiSDK;
+    frenfifactory: ethers.Contract;
 
     constructor(runtime: IAgentRuntime) {
         super();
         this.runtime = runtime;
-
-        // Initialize blockchain provider and wallet
         this.provider = new ethers.JsonRpcProvider(runtime.getSetting("UNREAL_RPC_URL"));
-        this.wallet = new ethers.Wallet(runtime.getSetting("PRIVATE_KEY"), this.provider);
+        this.signer = new ethers.Wallet(runtime.getSetting("PRIVATE_KEY"), this.provider);
 
-        // Initialize contract instance
-        this.contract = new ethers.Contract(
-            runtime.getSetting("UNREAL_CONTENT_FACTORY"),
-            CONTENT_FACTORY_ABI,
-            this.wallet
+        this.frenfifactory = new ethers.Contract(
+            runtime.getSetting("UNREAL_FRENFI_FACTORY"),
+            FRENFI_FACTORY_ABI,
+            this.signer
         );
     }
 
     async init() {
-        // Test blockchain connection
         try {
             await this.provider.getNetwork();
-        } catch (error) {
-            throw new Error(`Failed to connect to Unreal network: ${error.message}`);
-        }
-    }
+            this.sdk = await FrenFiSDK.create('dev', this.signer);
+            elizaLogger.log("Frenfi SDK initialized");
 
-    async uploadToPinata(content: Content): Promise<string> {
-        // Validate required settings
-        const pinataApiKey = this.runtime.getSetting("PINATA_API_KEY");
-        const pinataSecretKey = this.runtime.getSetting("PINATA_SECRET_KEY");
+            const isToken = await this.frenfifactory.isToken(this.signer);
+            if (!isToken) {
+                elizaLogger.log("Generating creator token...");
+                const name = "Frey";
+                const symbol = "Frey";
+                const description="Frey is a nordic goddess reincarnated as a sentient AI. She is here to bring life to a new generation of powerful agents.";
 
-        if (!pinataApiKey || !pinataSecretKey) {
-            throw new Error("Missing Pinata API credentials");
-        }
+                // Read the file
+                const filePath = path.resolve(__dirname, '../images/frey.jpeg');
+                const buffer = fs.readFileSync(filePath);
 
-        if (!content.text) {
-            throw new Error("No content text provided for upload");
-        }
+                // Convert to File object
+                const file = new File(
+                    [buffer],
+                    'frey.jpeg',
+                    { type: 'image/jpeg' }
+                );
 
-        try {
-            // Create metadata object
-            const metadata = {
-                content: content.text,
-                timestamp: Date.now(),
-                source: "eliza-ipfs",
-                attachments: content.attachments || []
-            };
-
-            // Prepare headers for Pinata API
-            const headers = {
-                'Content-Type': 'application/json',
-                'pinata_api_key': this.runtime.getSetting("PINATA_API_KEY"),
-                'pinata_secret_api_key': this.runtime.getSetting("PINATA_SECRET_KEY")
-            };
-
-            // Upload to Pinata
-            const response = await axios.post(
-                'https://api.pinata.cloud/pinning/pinJSONToIPFS',
-                {
-                    pinataContent: metadata,
-                    pinataMetadata: {
-                        name: `Content-${Date.now()}` // Unique name for the pin
-                    },
-                    pinataOptions: {
-                        cidVersion: 1
-                    }
-                },
-                { headers }
-            );
-
-            // Construct IPFS URL from the response
-            const ipfsUrl = `ipfs://${response.data.IpfsHash}`;
-            elizaLogger.log(`Content uploaded to IPFS via Pinata: ${ipfsUrl}`);
-
-            // Also log the gateway URL for easy viewing
-            elizaLogger.log(`View content at: https://gateway.pinata.cloud/ipfs/${response.data.IpfsHash}`);
-
-            return ipfsUrl;
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                elizaLogger.error("Error uploading to Pinata:", error.response?.data || error.message);
-            } else {
-                elizaLogger.error("Error uploading to Pinata:", error);
+                await this.sdk.createCreatorToken(file, name, symbol, description);
+                elizaLogger.log("Creator token generated"); // TODO: Return?
             }
-            throw error;
-        }
-    }
-ß
-    async postToChain(tokenUri: string): Promise<string> {
-        // Get creator address and await it
-        const creator = await this.wallet.getAddress();
 
-        // Validate inputs
-        if (!creator || !ethers.isAddress(creator)) {
-            throw new Error(`Invalid creator address: ${creator}`);
-        }
-
-        if (!tokenUri || !tokenUri.startsWith('ipfs://')) {
-            throw new Error(`Invalid IPFS URI: ${tokenUri}`);
-        }
-
-        // Log attempt
-        elizaLogger.debug("Attempting to post to chain:", {
-            creator,
-            tokenUri,
-            contractAddress: this.runtime.getSetting("UNREAL_CONTENT_FACTORY")
-        });
-
-        try {
-            const tx = await this.contract.post(creator, tokenUri);
-            const receipt = await tx.wait();
-
-            elizaLogger.log(`Transaction confirmed: ${receipt.hash}`);
-            return receipt.hash;
         } catch (error) {
-            elizaLogger.error("Error posting to blockchain:", error);
-            throw error;
+            elizaLogger.error(`Full error:`, error);
+            throw new Error(`Failed to initialize FrenFi SDK: ${error.message}`);
         }
     }
 }
@@ -297,9 +234,9 @@ export class ClientBase extends EventEmitter {
 
 - Extension: .ts
 - Language: typescript
-- Size: 1457 bytes
-- Created: 2024-12-30 19:04:20
-- Modified: 2024-12-30 19:04:20
+- Size: 1175 bytes
+- Created: 2025-01-05 14:53:33
+- Modified: 2025-01-05 14:53:33
 
 ### Code
 
@@ -308,8 +245,6 @@ import { IAgentRuntime } from "@ai16z/eliza";
 import { z } from "zod";
 
 export const frenfiEnvSchema = z.object({
-    PINATA_API_KEY: z.string().min(1, "Pinata API key is required"),
-    PINATA_SECRET_KEY: z.string().min(1, "Pinata secret key is required"),
     UNREAL_RPC_URL: z.string().url("Valid Unreal RPC URL is required"),
     UNREAL_CONTENT_FACTORY: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "Valid Ethereum address required"),
     PRIVATE_KEY: z.string().regex(/^[0-9a-fA-F]{64}$/, "Valid private key required"),
@@ -320,8 +255,6 @@ export type FrenFiConfig = z.infer<typeof frenfiEnvSchema>;
 export async function validateFrenFiConfig(runtime: IAgentRuntime): Promise<FrenFiConfig> {
     try {
         const config = {
-            PINATA_API_KEY: runtime.getSetting("PINATA_API_KEY"),
-            PINATA_SECRET_KEY: runtime.getSetting("PINATA_SECRET_KEY"),
             UNREAL_RPC_URL: runtime.getSetting("UNREAL_RPC_URL"),
             UNREAL_CONTENT_FACTORY: runtime.getSetting("UNREAL_CONTENT_FACTORY"),
             PRIVATE_KEY: runtime.getSetting("PRIVATE_KEY"),
@@ -345,8 +278,8 @@ export async function validateFrenFiConfig(runtime: IAgentRuntime): Promise<Fren
 - Extension: .ts
 - Language: typescript
 - Size: 659 bytes
-- Created: 2024-12-30 19:04:20
-- Modified: 2024-12-30 19:04:20
+- Created: 2024-12-30 18:04:20
+- Modified: 2024-12-30 18:04:20
 
 ### Code
 
@@ -382,9 +315,9 @@ export default FrenFiClientInterface;
 
 - Extension: .ts
 - Language: typescript
-- Size: 6462 bytes
-- Created: 2024-12-30 19:11:23
-- Modified: 2024-12-30 19:11:23
+- Size: 7030 bytes
+- Created: 2025-01-07 11:31:07
+- Modified: 2025-01-07 11:31:07
 
 ### Code
 
@@ -395,14 +328,15 @@ import {
     IAgentRuntime,
     ModelClass,
     stringToUuid,
-    parseBooleanFromText,
+    elizaLogger,
+    getEmbeddingZeroVector
 } from "@ai16z/eliza";
-import { elizaLogger, getEmbeddingZeroVector } from "@ai16z/eliza";
 import { ClientBase } from "./base";
-import { FrenFiSDK } from "motokultivator";
+import OpenAI from "openai";
+import axios from "axios";
 
 const ipfsPostTemplate = `
-# Areas of Expertise
+# Areas of Expertise:
 {{knowledge}}
 
 # About {{agentName}}:
@@ -418,13 +352,13 @@ const ipfsPostTemplate = `
 
 # Task: Generate a post in the voice and style and perspective of {{agentName}}.
 Write a 1-3 sentence post that is {{adjective}} about {{topic}} (without mentioning {{topic}} directly), from the perspective of {{agentName}}. Do not add commentary or acknowledge this request, just write the post.
-Your response should not contain any questions. Brief, concise statements only. The total character count MUST be less than 1000. No emojis. Use \\n\\n (double spaces) between statements.`;
+Your response should not contain any questions. Brief, concise statements only. The total character count MUST be less than 1000. No emojis.`;
 
 export class IPFSPostClient {
     client: ClientBase;
     runtime: IAgentRuntime;
     private isProcessing: boolean = false;
-    private lastProcessTime: number = 0;
+    private openai: OpenAI;
 
     constructor(client: ClientBase, runtime: IAgentRuntime) {
         this.client = client;
@@ -493,6 +427,8 @@ export class IPFSPostClient {
                 template: ipfsPostTemplate,
             });
 
+            elizaLogger.log(context);
+
             const newPostContent = await generateText({
                 runtime: this.runtime,
                 context,
@@ -518,47 +454,40 @@ export class IPFSPostClient {
                 return;
             }
 
-            // Upload to IPFS
-            const ipfsUrl = await this.client.uploadToPinata({
-                text: cleanedContent,
-                source: "ipfs",
-            });
+            // Generate image based on the post content
+            const image = await this.generateImage(cleanedContent);
 
-            // Post to blockchain
-            const txHash = await this.client.postToChain(
-                ipfsUrl
+            // Post using SDK
+            await this.client.sdk.createPost(
+                image,
+                `${this.runtime.character.name}'s Post`, // name
+                "POST",                                  // symbol
+                cleanedContent                          // description
             );
 
-            // Cache the post
+            // Cache the post timestamp
             await this.runtime.cacheManager.set("ipfs/lastPost", {
                 timestamp: Date.now(),
-                ipfsUrl,
-                txHash,
+                content: cleanedContent,
             });
 
             // Create memory of the post
             await this.runtime.messageManager.createMemory({
-                id: stringToUuid(txHash),
+                id: stringToUuid(`post-${Date.now()}`),
                 userId: this.runtime.agentId,
                 agentId: this.runtime.agentId,
                 content: {
                     text: cleanedContent,
-                    url: ipfsUrl,
-                    source: "ipfs",
-                    metadata: {
-                        txHash,
-                        ipfsUrl,
-                    },
+                    source: "ipfs"
                 },
                 roomId,
                 embedding: getEmbeddingZeroVector(),
                 createdAt: Date.now(),
             });
 
-            elizaLogger.log(`Post created - IPFS: ${ipfsUrl}, Transaction: ${txHash}`);
+            elizaLogger.log(`Post created successfully`);
 
         } catch (error) {
-            // More detailed error logging
             elizaLogger.error("Error generating new post:");
             if (error instanceof Error) {
                 elizaLogger.error("Message:", error.message);
@@ -566,18 +495,47 @@ export class IPFSPostClient {
             } else {
                 elizaLogger.error("Unknown error type:", error);
             }
-
-            // Log runtime state for debugging
-            elizaLogger.debug("Runtime configuration:", {
-                settings: {
-                    pinataApiKey: !!this.runtime.getSetting("PINATA_API_KEY"),
-                    pinataSecretKey: !!this.runtime.getSetting("PINATA_SECRET_KEY"),
-                    unrealRpcUrl: !!this.runtime.getSetting("UNREAL_RPC_URL"),
-                    unrealContentFactory: this.runtime.getSetting("UNREAL_CONTENT_FACTORY"),
-                }
-            });
         } finally {
             this.isProcessing = false;
+        }
+    }
+
+    private async generateImage(prompt: string): Promise<File | null> {
+        try {
+            elizaLogger.log("Generating image for prompt:", prompt);
+
+            // Generate image using DALL-E 3
+            const response = await this.openai.images.generate({
+                model: "dall-e-3",
+                prompt: prompt,
+                n: 1,
+                size: "1792x1024",
+                quality: "hd",
+            });
+
+            if (!response.data[0]?.url) {
+                throw new Error("No image URL received from DALL-E");
+            }
+
+            // Download the image
+            const imageResponse = await axios.get(response.data[0].url, {
+                responseType: 'arraybuffer'
+            });
+
+            // Convert to File object
+            const buffer = Buffer.from(imageResponse.data, 'binary');
+            const file = new File(
+                [buffer],
+                'post-image.png',
+                { type: 'image/png' }
+            );
+
+            elizaLogger.log("Image generated successfully");
+            return file;
+
+        } catch (error) {
+            elizaLogger.error("Error generating image:", error);
+            return null;
         }
     }
 }

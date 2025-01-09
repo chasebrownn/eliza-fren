@@ -8,9 +8,11 @@ import {
     getEmbeddingZeroVector
 } from "@ai16z/eliza";
 import { ClientBase } from "./base";
+import OpenAI from "openai";
+import axios from "axios";
 
 const ipfsPostTemplate = `
-# Areas of Expertise
+# Areas of Expertise:
 {{knowledge}}
 
 # About {{agentName}}:
@@ -32,6 +34,7 @@ export class IPFSPostClient {
     client: ClientBase;
     runtime: IAgentRuntime;
     private isProcessing: boolean = false;
+    private openai: OpenAI | null = null;
 
     constructor(client: ClientBase, runtime: IAgentRuntime) {
         this.client = client;
@@ -69,6 +72,45 @@ export class IPFSPostClient {
         generateNewPostLoop();
     }
 
+    private async generateImage(prompt: string): Promise<Blob | null> {
+        if (!this.openai) {
+            const apiKey = this.runtime.getSetting("OPENAI_API_KEY");
+            if (!apiKey) {
+                elizaLogger.error("OpenAI API key not found in runtime settings");
+                return null;
+            }
+            this.openai = new OpenAI({ apiKey });
+        }
+
+        try {
+            elizaLogger.log("Generating image for prompt:", prompt);
+
+            const response = await this.openai.images.generate({
+                model: "dall-e-3",
+                prompt: prompt,
+                n: 1,
+                size: "1792x1024",
+                quality: "hd",
+            });
+
+            if (!response.data[0]?.url) {
+                throw new Error("No image URL received from DALL-E");
+            }
+
+            const imageResponse = await axios.get(response.data[0].url, {
+                responseType: 'arraybuffer'
+            });
+
+            const blob = new Blob([Buffer.from(imageResponse.data)], { type: 'image/webp' });
+            elizaLogger.log("Image generated successfully");
+            return blob;
+
+        } catch (error) {
+            elizaLogger.error("Error generating image:", error);
+            return null;
+        }
+    }
+
     private async generateNewPost() {
         if (this.isProcessing) {
             elizaLogger.log('Already processing post, skipping');
@@ -99,8 +141,7 @@ export class IPFSPostClient {
                 state,
                 template: ipfsPostTemplate,
             });
-
-            elizaLogger.log(context);
+            //elizaLogger.log(context);
 
             const newPostContent = await generateText({
                 runtime: this.runtime,
@@ -108,7 +149,6 @@ export class IPFSPostClient {
                 modelClass: ModelClass.SMALL,
             });
 
-            // Clean up the generated content
             let cleanedContent = '';
             try {
                 const parsedResponse = JSON.parse(newPostContent);
@@ -127,73 +167,34 @@ export class IPFSPostClient {
                 return;
             }
 
-            // Generate image based on the content
-            elizaLogger.log("Generating image for content");
-            const imageState = await this.runtime.composeState(
-                {
-                    userId: this.runtime.agentId,
-                    roomId: roomId,
-                    agentId: this.runtime.agentId,
-                    content: {
-                        text: cleanedContent,
-                        action: "GENERATE_IMAGE",
-                        settings: {
-                            width: 578,
-                            height: 300
-                        }
-                    },
-                },
-                {}
-            );
-            // const imageResult = await this.runtime.imageService.generateImage({
-            //     prompt: cleanedContent,
-            //     width: 578,
-            //     height: 300
-            // });
+            const image = await this.generateImage(cleanedContent);
 
-            // Convert the image to a File object
-            //const response = await fetch(imageResult.url);
-            //const imageBlob = await response.blob();
-            //const imageFile = new File([imageBlob], `post-image-${Date.now()}.png`, { type: 'image/png' });
-
-            // Create File object from content
-            const blob = new Blob([cleanedContent], { type: 'text/plain' });
-            const file = new File([blob], `post-${Date.now()}.txt`, { type: 'text/plain' });
-
-            // Post using SDK
             await this.client.sdk.createPost(
-                null,
-                `${this.runtime.character.name}'s Post`, // name
-                "POST",                                  // symbol
-                cleanedContent                          // description
+                image,
+                `${this.runtime.character.name}'s Post`,
+                "POST",
+                cleanedContent
             );
 
-            // Cache the post timestamp
             await this.runtime.cacheManager.set("ipfs/lastPost", {
                 timestamp: Date.now(),
                 content: cleanedContent,
-                //imageUrl: imageResult.url
             });
 
-            // Create memory of the post
             await this.runtime.messageManager.createMemory({
                 id: stringToUuid(`post-${Date.now()}`),
                 userId: this.runtime.agentId,
                 agentId: this.runtime.agentId,
                 content: {
                     text: cleanedContent,
-                    source: "ipfs",
-                    attachments: [{
-                        type: "image",
-                        //url: imageResult.url
-                    }]
+                    source: "ipfs"
                 },
                 roomId,
                 embedding: getEmbeddingZeroVector(),
                 createdAt: Date.now(),
             });
 
-            elizaLogger.log(`Post created successfully with image`);
+            elizaLogger.log(`Post created successfully`);
 
         } catch (error) {
             elizaLogger.error("Error generating new post:");

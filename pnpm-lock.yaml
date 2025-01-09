@@ -589,13 +589,16 @@ importers:
         version: link:../core
       axios:
         specifier: ^1.6.2
-        version: 1.7.9(debug@4.4.0)
+        version: 1.7.9
       ethers:
         specifier: ^6.9.0
         version: 6.13.4(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       motokultivator:
-        specifier: ^0.0.23
-        version: 0.0.23(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+        specifier: ^0.0.30
+        version: 0.0.30(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      openai:
+        specifier: 4.73.0
+        version: 4.73.0(encoding@0.1.13)(zod@3.22.4)
       zod:
         specifier: 3.22.4
         version: 3.22.4
@@ -14199,8 +14202,8 @@ packages:
   motion@10.16.2:
     resolution: {integrity: sha512-p+PurYqfUdcJZvtnmAqu5fJgV2kR0uLFQuBKtLeFVTrYEVllI99tiOTSefVNYuip9ELTEkepIIDftNdze76NAQ==}
 
-  motokultivator@0.0.23:
-    resolution: {integrity: sha512-RWhTqut3syglWiOLRyPl7TKqPP1ar6xzEZFc5verVG2XIy2KY9AYHQI426l1ONYYTcqZrCE+H1t/4VbaImW6bA==}
+  motokultivator@0.0.30:
+    resolution: {integrity: sha512-d54ilwDuQypmxOyXyOwrdO0D54Cluatro7qaElPqdwwnWiHHFista407wy3v/tR2qe5Ndso+WRNhuBpev+gC8w==}
 
   mri@1.2.0:
     resolution: {integrity: sha512-tzzskb3bG8LvYGFF/mDTpq3jpI6Q9wc3LEmBaghu+DdCssd1FakN7Bc0hVNmEyGq1bq3RgfkCb3cmQLpNPOroA==}
@@ -29432,6 +29435,14 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
+  axios@1.7.9:
+    dependencies:
+      follow-redirects: 1.15.9
+      form-data: 4.0.1
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+
   axios@1.7.9(debug@4.4.0):
     dependencies:
       follow-redirects: 1.15.9(debug@4.4.0)
@@ -31485,6 +31496,10 @@ snapshots:
     dependencies:
       ms: 2.1.3
 
+  debug@4.4.0:
+    dependencies:
+      ms: 2.1.3
+
   debug@4.4.0(supports-color@5.5.0):
     dependencies:
       ms: 2.1.3
@@ -32941,6 +32956,8 @@ snapshots:
     dependencies:
       async: 0.2.10
       which: 1.3.1
+
+  follow-redirects@1.15.9: {}
 
   follow-redirects@1.15.9(debug@4.3.7):
     optionalDependencies:
@@ -37014,9 +37031,9 @@ snapshots:
       '@motionone/utils': 10.18.0
       '@motionone/vue': 10.16.4
 
-  motokultivator@0.0.23(bufferutil@4.0.8)(utf-8-validate@5.0.10):
+  motokultivator@0.0.30(bufferutil@4.0.8)(utf-8-validate@5.0.10):
     dependencies:
-      axios: 1.7.9(debug@4.4.0)
+      axios: 1.7.9
       dotenv: 16.4.7
       ethers: 6.13.4(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       prettier: 3.4.2
@@ -37701,6 +37718,20 @@ snapshots:
       define-lazy-prop: 2.0.0
       is-docker: 2.2.1
       is-wsl: 2.2.0
+
+  openai@4.73.0(encoding@0.1.13)(zod@3.22.4):
+    dependencies:
+      '@types/node': 18.19.68
+      '@types/node-fetch': 2.6.12
+      abort-controller: 3.0.0
+      agentkeepalive: 4.5.0
+      form-data-encoder: 1.7.2
+      formdata-node: 4.4.1
+      node-fetch: 2.7.0(encoding@0.1.13)
+    optionalDependencies:
+      zod: 3.22.4
+    transitivePeerDependencies:
+      - encoding
 
   openai@4.73.0(encoding@0.1.13)(zod@3.23.8):
     dependencies:
@@ -41514,7 +41545,7 @@ snapshots:
       bundle-require: 4.2.1(esbuild@0.19.12)
       cac: 6.7.14
       chokidar: 3.6.0
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.0
       esbuild: 0.19.12
       execa: 5.1.1
       globby: 11.1.0
